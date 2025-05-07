@@ -1,0 +1,37 @@
+import cadquery as cq
+from math import radians
+
+# Parametri puleggia
+outer_diameter = 82.0     # mm
+total_width = 32.0        # mm
+hub_width = 15.0          # parte centrale sporgente
+bore_diameter = 20.0      # foro centrale
+key_width = 6.0           # larghezza chiavetta
+key_height = 3.3          # altezza chiavetta
+
+# Costruzione base puleggia (cilindro pieno)
+puleggia = cq.Workplane("XY").circle(outer_diameter / 2).extrude(total_width)
+
+# Rientranza centrale (mozzo)
+mozzo_cut = (
+    cq.Workplane("XY")
+    .circle((bore_diameter + 1) / 2)
+    .extrude(hub_width)
+    .translate((0, 0, (total_width - hub_width) / 2))
+)
+puleggia = puleggia.cut(mozzo_cut)
+
+# Foro centrale (per albero)
+puleggia = puleggia.faces(">Z").workplane(centerOption="CenterOfMass").hole(bore_diameter)
+
+# Chiavetta
+chiavetta = (
+    cq.Workplane("YZ")
+    .rect(key_height, key_width)
+    .extrude(total_width)
+    .translate((bore_diameter / 2, -key_width / 2, 0))
+)
+puleggia = puleggia.cut(chiavetta)
+
+# Esporta in STEP
+cq.exporters.export(puleggia, "puleggia_con_chiavetta.step")
